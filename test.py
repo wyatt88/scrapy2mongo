@@ -1,9 +1,11 @@
 from urllib.request import urlopen
+from urllib.error import HTTPError
 from bs4 import BeautifulSoup
 import pymongo
 import logging
 import sys
 from multiprocessing.dummy import Pool as ThreadPool
+import time
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
@@ -31,11 +33,17 @@ endPage = 1000
 
 
 def getQuestionDetail(detailURL):
-    detailhtml = urlopen(stackoverflowURL+detailURL)
-    detailhtmlStr = detailhtml.read()
-    questionObj = BeautifulSoup(detailhtmlStr, 'lxml')
-    param = questionObj.find_all('div', {'class': 'post-text'})[0].text
-    return str(param)
+    try:
+    	detailhtml = urlopen(stackoverflowURL+detailURL)
+    except HTTPError as e:
+        root.debug(e)
+        time.sleep(3)
+    else:
+    	detailhtmlStr = detailhtml.read()
+    	questionObj = BeautifulSoup(detailhtmlStr, 'lxml')
+    	param = questionObj.find_all('div', {'class': 'post-text'})[0].text
+    	return str(param)
+    return getQuestionDetail(detailURL)
 
 
 def saveQuestion(question):
@@ -61,13 +69,24 @@ def saveQuestion(question):
         questionDict['question-hyperlink'])
     mycol.insert_one(questionDict)
 
+def requestURL(url):
+    try:
+    	html = urlopen(url)
+    except HTTPError as e:
+        root.debug(e)
+        time.sleep(3)
+    else:
+        return html
+    return requestURL(url)
+
 
 for i in range(initPage, endPage):
-    html = urlopen(initURL+("&page=%d" % i))
+    html = requestURL(initURL+("&page=%d" % i))
     root.debug("The current page is %d" % i)
     htmlStr = html.read()
     bsObj = BeautifulSoup(htmlStr, 'lxml')
     questionList = bsObj.find_all('div', attrs={'class': 'question-summary'})
-    pool = ThreadPool(len(questionList))
+    pool = ThreadPool(10)
     pool.map(saveQuestion, questionList)
+    pool.close()
     pool.join()
