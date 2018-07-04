@@ -6,6 +6,7 @@ import logging
 import sys
 from multiprocessing.dummy import Pool as ThreadPool
 import time
+import random
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
@@ -34,6 +35,7 @@ endPage = 1000
 
 def getQuestionDetail(detailURL):
     try:
+        time.sleep(random.randint(1,5))
     	detailhtml = urlopen(stackoverflowURL+detailURL)
     except HTTPError as e:
         root.debug(e)
