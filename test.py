@@ -4,7 +4,7 @@ import pymongo
 
 mainTag = 'nginx'
 
-myclient = pymongo.MongoClient("mongodb://localhost:32768")
+myclient = pymongo.MongoClient("mongodb://localhost:27017")
 mydb = myclient['tech-questions']
 mycol = mydb[mainTag]
 
@@ -12,19 +12,15 @@ pagesize = 50
 stackoverflowURL = "https://stackoverflow.com"
 initURL = stackoverflowURL + \
     ("/questions/tagged/%s?sort=newest&pagesize=%d" % (mainTag, pagesize))
-# testURL = "/questions/tagged/nginx?page=635&sort=newest&pagesize=50"
-# questionDict = {}
 
 page = 1
-
 
 def getQuestionDetail(detailURL):
     detailhtml = urlopen(stackoverflowURL+detailURL)
     detailhtmlStr = detailhtml.read()
-    questionObj = BeautifulSoup(detailhtmlStr, 'html5lib')
+    questionObj = BeautifulSoup(detailhtmlStr,'lxml')
     param = questionObj.find_all('div', {'class': 'post-text'})[0].text
     return str(param)
-
 
 for i in range(1, 1000):
 
@@ -33,7 +29,7 @@ for i in range(1, 1000):
     else:
         html = urlopen(initURL+("&page=%d" % i))
     htmlStr = html.read()
-    bsObj = BeautifulSoup(htmlStr, 'html5lib')
+    bsObj = BeautifulSoup(htmlStr, 'lxml')
     questionList = bsObj.find_all('div', attrs={'class': 'question-summary'})
     for question in questionList:
         questionDict = {}
