@@ -35,16 +35,16 @@ endPage = 1000
 
 def getQuestionDetail(detailURL):
     try:
-        time.sleep(random.randint(1,10))
+        time.sleep(random.randint(1, 10))
         detailhtml = urlopen(stackoverflowURL+detailURL)
     except HTTPError as e:
         root.debug(e)
         time.sleep(300)
     else:
-    	detailhtmlStr = detailhtml.read()
-    	questionObj = BeautifulSoup(detailhtmlStr, 'lxml')
-    	param = questionObj.find_all('div', {'class': 'post-text'})[0].text
-    	return str(param)
+        detailhtmlStr = detailhtml.read()
+        questionObj = BeautifulSoup(detailhtmlStr, 'lxml')
+        param = questionObj.find_all('div', {'class': 'post-text'})[0].text
+        return str(param)
     return getQuestionDetail(detailURL)
 
 
@@ -65,15 +65,22 @@ def saveQuestion(question):
         if tag.text != mainTag:
             tagList.append(tag.text)
         questionDict['other-tags'] = tagList
-    questionDict['date'] = question.find(
-        'span', {'class': 'relativetime'})['title']
+    date = ""
+    try:
+        date = question.find(
+            'span', {'class': 'relativetime'})['title']
+    except AttributeError as e:
+        date = "1970-01-01 00:00:01"
+        root.debug(e)
+    questionDict['date'] = date
     questionDict['question-detail'] = getQuestionDetail(
         questionDict['question-hyperlink'])
     mycol.insert_one(questionDict)
 
+
 def requestURL(url):
     try:
-    	html = urlopen(url)
+        html = urlopen(url)
     except HTTPError as e:
         root.debug(e)
         time.sleep(3)
