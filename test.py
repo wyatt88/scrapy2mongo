@@ -35,11 +35,11 @@ endPage = 1000
 
 def getQuestionDetail(detailURL):
     try:
-        time.sleep(random.randint(1,5))
-    	detailhtml = urlopen(stackoverflowURL+detailURL)
+        time.sleep(random.randint(1,10))
+        detailhtml = urlopen(stackoverflowURL+detailURL)
     except HTTPError as e:
         root.debug(e)
-        time.sleep(3)
+        time.sleep(300)
     else:
     	detailhtmlStr = detailhtml.read()
     	questionObj = BeautifulSoup(detailhtmlStr, 'lxml')
