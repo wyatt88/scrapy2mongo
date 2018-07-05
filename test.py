@@ -1,5 +1,7 @@
 from urllib.request import urlopen
 from urllib.error import HTTPError
+from urllib.request import Request
+from urllib import parse
 from bs4 import BeautifulSoup
 import pymongo
 import logging
@@ -7,6 +9,7 @@ import sys
 from multiprocessing.dummy import Pool as ThreadPool
 import time
 import random
+
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
@@ -26,9 +29,14 @@ mycol = mydb[mainTag]
 
 pagesize = 50
 stackoverflowURL = "https://stackoverflow.com"
+queryStr = "?sort=newest&pagesize=%d" % pagesize
 initURL = stackoverflowURL + \
     ("/questions/tagged/%s?sort=newest&pagesize=%d" % (mainTag, pagesize))
-
+tagIndexURL = stackoverflowURL + "/filter/tags-for-index"
+values = {
+    'filter': mainTag,
+    'tab': 'Popular'
+}
 initPage = 1
 endPage = 1000
 
@@ -88,14 +96,57 @@ def requestURL(url):
         return html
     return requestURL(url)
 
+def postrequestURL(url, body):
+    try:
+        data = parse.urlencode(body).encode('utf-8')
+        request = Request(url,data)
+        response = urlopen(request)
+    except HTTPError as e:
+        root.error(e)
+        time.sleep(3)
+    else:
+        return response
+    return postrequestURL(url, body) 
 
-for i in range(initPage, endPage):
-    html = requestURL(initURL+("&page=%d" % i))
-    root.debug("The current page is %d" % i)
-    htmlStr = html.read()
-    bsObj = BeautifulSoup(htmlStr, 'lxml')
-    questionList = bsObj.find_all('div', attrs={'class': 'question-summary'})
-    pool = ThreadPool(10)
-    pool.map(saveQuestion, questionList)
-    pool.close()
-    pool.join()
+response = postrequestURL(tagIndexURL, values)
+responseStr = response.read()
+repbsObj = BeautifulSoup(responseStr,'lxml')
+try:
+    tagsBrowser = repbsObj.find('div', attrs={'id': 'tags-browser'})
+except AttributeError as e:
+    root.error("Reason is %s" % str(e))
+else:
+    try:
+        tagsList = tagsBrowser.find_all('div', attrs={'class': "tag-cell"})
+    except AttributeError as e:
+        root.debug(e)
+    else:
+        for pertag in tagsList:
+            tagName = pertag.a.text
+            tagLink = pertag.a['href']
+            for i in range(initPage, endPage):
+                html = requestURL(stackoverflowURL + tagLink + queryStr + ("&page=%d" % i))
+                root.debug("The tag is %s, current page is %d" % (tagName, i))
+                htmlStr = html.read()
+                bsObj = BeautifulSoup(htmlStr, 'lxml')
+                try:
+                    questionList = bsObj.find_all('div', attrs={'class': 'question-summary'})
+                except AttributeError as e:
+                    root.debug(e)
+                    break
+                else:
+                    pool = ThreadPool(10)
+                    pool.map(saveQuestion, questionList)
+                    pool.close()
+                    pool.join() 
+
+#for i in range(initPage, endPage):
+#    html = requestURL(initURL+("&page=%d" % i))
+#    root.debug("The current page is %d" % i)
+#    htmlStr = html.read()
+#    bsObj = BeautifulSoup(htmlStr, 'lxml')
+#    questionList = bsObj.find_all('div', attrs={'class': 'question-summary'})
+#    pool = ThreadPool(10)
+#    pool.map(saveQuestion, questionList)
+#    pool.close()
+#    pool.join()
