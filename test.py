@@ -21,7 +21,7 @@ formatter = logging.Formatter(
 ch.setFormatter(formatter)
 root.addHandler(ch)
 
-mainTag = 'nginx'
+mainTag = 'aws'
 
 myclient = pymongo.MongoClient("mongodb://localhost:27017")
 mydb = myclient['tech-questions']
@@ -133,6 +133,7 @@ else:
                     questionList = bsObj.find_all('div', attrs={'class': 'question-summary'})
                 except AttributeError as e:
                     root.debug(e)
+                    root.debug("%s is Finished" % tagName)
                     break
                 else:
                     pool = ThreadPool(10)
