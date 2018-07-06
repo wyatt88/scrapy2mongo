@@ -39,7 +39,7 @@ values = {
     'filter': mainTag,
     'tab': 'Popular'
 }
-initPage = 1
+initPage = 138
 endPage = 1000
 
 
@@ -97,7 +97,7 @@ def requestURL(url):
         time.sleep(3)
     else:
         return html
-    return requestURL(url)
+    return ""
 
 
 def postrequestURL(url, body):
@@ -133,6 +133,8 @@ else:
             for i in range(initPage, endPage):
                 html = requestURL(stackoverflowURL + tagLink +
                                   queryStr + ("&page=%d" % i))
+                if html == "":
+                    break
                 root.debug("The tag is %s, current page is %d" % (tagName, i))
                 htmlStr = html.read()
                 bsObj = BeautifulSoup(htmlStr, 'lxml')
