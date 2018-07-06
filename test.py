@@ -39,7 +39,7 @@ values = {
     'filter': mainTag,
     'tab': 'Popular'
 }
-initPage = 138
+initPage = 1
 endPage = 1000
 
 
