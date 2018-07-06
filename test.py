@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from urllib.request import urlopen
 from urllib.error import HTTPError
 from urllib.request import Request
@@ -23,7 +25,7 @@ root.addHandler(ch)
 
 mainTag = 'aws'
 
-myclient = pymongo.MongoClient("mongodb://localhost:27017")
+myclient = pymongo.MongoClient("mongodb://10.122.43.177:27017")
 mydb = myclient['tech-questions']
 mycol = mydb[mainTag]
 
@@ -46,7 +48,7 @@ def getQuestionDetail(detailURL):
         time.sleep(random.randint(1, 10))
         detailhtml = urlopen(stackoverflowURL+detailURL)
     except HTTPError as e:
-        root.debug(e)
+        root.debug("Get detail is wrong,becauls is %s" % e)
         time.sleep(300)
     else:
         detailhtmlStr = detailhtml.read()
@@ -90,7 +92,8 @@ def requestURL(url):
     try:
         html = urlopen(url)
     except HTTPError as e:
-        root.debug(e)
+        print(e.getcode())
+        root.debug("Cant open tag url,Because is %s" % e)
         time.sleep(3)
     else:
         return html
@@ -103,7 +106,8 @@ def postrequestURL(url, body):
         request = Request(url, data)
         response = urlopen(request)
     except HTTPError as e:
-        root.error(e)
+        print(e.getcode())
+        root.error("Get tags error,because is %s" % e)
         time.sleep(3)
     else:
         return response
@@ -121,7 +125,7 @@ else:
     try:
         tagsList = tagsBrowser.find_all('div', attrs={'class': "tag-cell"})
     except TypeError as e:
-        root.debug(e)
+        root.debug("Can't find div tag,the reason is %s" % e)
     else:
         for pertag in tagsList:
             tagName = pertag.a.text
