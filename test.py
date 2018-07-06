@@ -69,7 +69,7 @@ def saveQuestion(question):
     try:
         date = question.find(
             'span', {'class': 'relativetime'})['title']
-    except AttributeError as e:
+    except TypeError as e:
         date = "1970-01-01 00:00:01"
         root.debug(e)
     questionDict['date'] = date
