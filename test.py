@@ -77,9 +77,9 @@ def saveQuestion(question):
     try:
         date = question.find(
             'span', {'class': 'relativetime'})['title']
-    except AttributeError as e:
+    except TypeError as e:
         date = "1970-01-01 00:00:01"
-        root.debug(e)
+        root.debug("There is no span tag and class is relativetime, %s" % e)
     questionDict['date'] = date
     questionDict['question-detail'] = getQuestionDetail(
         questionDict['question-hyperlink'])
@@ -96,42 +96,46 @@ def requestURL(url):
         return html
     return requestURL(url)
 
+
 def postrequestURL(url, body):
     try:
         data = parse.urlencode(body).encode('utf-8')
-        request = Request(url,data)
+        request = Request(url, data)
         response = urlopen(request)
     except HTTPError as e:
         root.error(e)
         time.sleep(3)
     else:
         return response
-    return postrequestURL(url, body) 
+    return postrequestURL(url, body)
+
 
 response = postrequestURL(tagIndexURL, values)
 responseStr = response.read()
-repbsObj = BeautifulSoup(responseStr,'lxml')
+repbsObj = BeautifulSoup(responseStr, 'lxml')
 try:
     tagsBrowser = repbsObj.find('div', attrs={'id': 'tags-browser'})
-except AttributeError as e:
+except TypeError as e:
     root.error("Reason is %s" % str(e))
 else:
     try:
         tagsList = tagsBrowser.find_all('div', attrs={'class': "tag-cell"})
-    except AttributeError as e:
+    except TypeError as e:
         root.debug(e)
     else:
         for pertag in tagsList:
             tagName = pertag.a.text
             tagLink = pertag.a['href']
             for i in range(initPage, endPage):
-                html = requestURL(stackoverflowURL + tagLink + queryStr + ("&page=%d" % i))
+                html = requestURL(stackoverflowURL + tagLink +
+                                  queryStr + ("&page=%d" % i))
                 root.debug("The tag is %s, current page is %d" % (tagName, i))
                 htmlStr = html.read()
                 bsObj = BeautifulSoup(htmlStr, 'lxml')
                 try:
-                    questionList = bsObj.find_all('div', attrs={'class': 'question-summary'})
-                except AttributeError as e:
+                    questionList = bsObj.find_all(
+                        'div', attrs={'class': 'question-summary'})
+                except TypeError as e:
                     root.debug(e)
                     root.debug("%s is Finished" % tagName)
                     break
@@ -139,9 +143,9 @@ else:
                     pool = ThreadPool(10)
                     pool.map(saveQuestion, questionList)
                     pool.close()
-                    pool.join() 
+                    pool.join()
 
-#for i in range(initPage, endPage):
+# for i in range(initPage, endPage):
 #    html = requestURL(initURL+("&page=%d" % i))
 #    root.debug("The current page is %d" % i)
 #    htmlStr = html.read()
