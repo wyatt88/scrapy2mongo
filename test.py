@@ -23,7 +23,7 @@ formatter = logging.Formatter(
 ch.setFormatter(formatter)
 root.addHandler(ch)
 
-mainTag = 'aws'
+mainTag = 'nginx'
 
 myclient = pymongo.MongoClient("mongodb://10.122.43.177:27017")
 mydb = myclient['tech-questions']
@@ -40,7 +40,7 @@ values = {
     'tab': 'Popular'
 }
 initPage = 1
-endPage = 1000
+endPage = 100000
 
 
 def getQuestionDetail(detailURL):
