@@ -43,7 +43,7 @@ initPage = 1
 endPage = 100000
 
 
-def getQuestionDetail(detailURL):
+def getQuestionDetail(detailURL, hasAnswer):
     try:
         time.sleep(random.randint(1, 10))
         detailhtml = urlopen(stackoverflowURL+detailURL)
@@ -53,18 +53,34 @@ def getQuestionDetail(detailURL):
     else:
         detailhtmlStr = detailhtml.read()
         questionObj = BeautifulSoup(detailhtmlStr, 'lxml')
-        param = questionObj.find_all('div', {'class': 'post-text'})[0].text
-        return str(param)
-    return getQuestionDetail(detailURL)
+        questionTag = questionObj.find('div', {'class': 'question'})
+        questionDesc = questionTag.find_all(
+            'div', {'class': 'post-text'})[0].text
+        try:
+            acceptAnswerTag = questionObj.find(
+                'div', {'class': 'accepted-answer'})
+        except TypeError as e:
+            root.debug("Cannot find the accepted-answer tag, %s", e)
+            answerDesc = ""
+        else:
+            answerDesc = acceptAnswerTag.find_all(
+                'div', {'class': 'post-text'})[0].text
+        return (str(questionDesc), str(answerDesc))
+    return getQuestionDetail(detailURL, hasAnswer)
 
 
 def saveQuestion(question):
+    hasAnswers = False
     questionDict = {}
     questionDict['question-id'] = question.attrs['id']
     questionDict['vote'] = int(question.find(
         'span', {'class': 'vote-count-post'}).strong.text)
     questionDict['answers'] = int(question.find(
         'div', {'class': 'status'}).strong.text)
+    if questionDict['answers'] > 0:
+        hasAnswers = True
+    else:
+        questionDict['accept-answer'] = ""
     questionDict['summary'] = question.find(
         'div', {'class': 'summary'}).h3.a.text
     questionDict['question-hyperlink'] = question.find(
@@ -83,8 +99,10 @@ def saveQuestion(question):
         date = "1970-01-01 00:00:01"
         root.debug("There is no span tag and class is relativetime, %s" % e)
     questionDict['date'] = date
-    questionDict['question-detail'] = getQuestionDetail(
-        questionDict['question-hyperlink'])
+    questionDetail = getQuestionDetail(
+        questionDict['question-hyperlink'], hasAnswers)
+    questionDict['question-detail'] = questionDetail[0]
+    questionDict['accepted-answer'] = questionDetail[1]
     mycol.insert_one(questionDict)
 
 
