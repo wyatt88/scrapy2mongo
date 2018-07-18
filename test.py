@@ -56,15 +56,17 @@ def getQuestionDetail(detailURL, hasAnswer):
         questionTag = questionObj.find('div', {'class': 'question'})
         questionDesc = questionTag.find_all(
             'div', {'class': 'post-text'})[0].text
-        try:
-            acceptAnswerTag = questionObj.find(
-                'div', {'class': 'accepted-answer'})
-        except TypeError as e:
-            root.debug("Cannot find the accepted-answer tag, %s", e)
-            answerDesc = ""
-        else:
-            answerDesc = acceptAnswerTag.find_all(
-                'div', {'class': 'post-text'})[0].text
+        answerDesc = ""
+        if hasAnswer:
+            try:
+                acceptAnswerTag = questionObj.find(
+                    'div', {'class': 'accepted-answer'})
+            except AttributeError as e:
+                root.debug("Cannot find the accepted-answer tag, %s", e)
+                answerDesc = ""
+            else:
+                answerDesc = acceptAnswerTag.find_all(
+                    'div', {'class': 'post-text'})[0].text
         return (str(questionDesc), str(answerDesc))
     return getQuestionDetail(detailURL, hasAnswer)
 
